@@ -1,6 +1,7 @@
 import os
 import json
 import tempfile
+import qrcode
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -9,6 +10,7 @@ from reportlab.lib import colors
 from PIL import Image as PILImage
 from models import Schedule
 from app import app
+from flask import url_for, request
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -155,5 +157,32 @@ def generate_room_pdf(room):
     
     # Build PDF
     doc.build(story)
+    
+    return temp_path
+
+def generate_room_qr_code(room):
+    """Generate a QR code for a room with its information URL"""
+    # Create the URL for room details with QR parameter for mobile optimization
+    room_url = url_for('room_detail', room_id=room.id, qr=1, _external=True)
+    
+    # Create QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(room_url)
+    qr.make(fit=True)
+    
+    # Create QR code image
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Create temporary file
+    temp_fd, temp_path = tempfile.mkstemp(suffix='.png')
+    os.close(temp_fd)
+    
+    # Save QR code image
+    qr_img.save(temp_path)
     
     return temp_path

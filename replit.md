@@ -1,6 +1,6 @@
 # Overview
 
-This is a classroom management system built for Escola SENAI "Morvan Figueiredo" with Flask that helps manage room information, schedules, and resources. The application allows users to create, view, edit, and delete classroom records along with their schedules. Key features include room search and filtering, image uploads for rooms, schedule management with bulk scheduling for long periods (e.g., Monday to Friday for several months), technical course tracking, and PDF report generation.
+This is a classroom management system built for Escola SENAI "Morvan Figueiredo" with Flask that helps manage room information, schedules, and resources. The application allows users to create, view, edit, and delete classroom records along with their schedules. Key features include room search and filtering, image uploads for rooms, schedule management with bulk scheduling for long periods (e.g., Monday to Friday for several months), technical course tracking, and PDF report generation, and QR code sharing functionality.
 
 # User Preferences
 
@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **Database ORM**: SQLAlchemy with declarative base model approach
 - **File Handling**: Werkzeug for secure file uploads with validation
 - **PDF Generation**: ReportLab for creating comprehensive room reports
+- **QR Code Generation**: QRCode library for creating shareable room links
 - **Image Processing**: PIL (Pillow) for image handling and optimization
 
 ## Data Model Design
@@ -35,6 +36,9 @@ Preferred communication style: Simple, everyday language.
 - Added new BulkScheduleForm with multi-day selection and date range capabilities
 - Enhanced UI to display technical course information in room details and schedule tables
 - Created dedicated bulk scheduling template with quick day selection buttons
+- Implemented QR code generation system that provides mobile-optimized room information when scanned
+- Added mobile-responsive QR view template for enhanced mobile user experience
+- Integrated QRCode library for generating downloadable QR codes linked to room details
 
 ## File Storage Strategy
 - **Upload Directory**: Local file system storage in `uploads/` folder

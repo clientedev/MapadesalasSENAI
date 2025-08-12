@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Mapa de Salas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-{% if room %}edit{% else %}plus{% endif %} me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Informações Básicas</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.location.label(class="form-label") }}
+                                {{ form.location(class="form-control" + (" is-invalid" if form.location.errors else "")) }}
+                                {% if form.location.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.location.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.capacity.label(class="form-label") }}
+                                {{ form.capacity(class="form-control" + (" is-invalid" if form.capacity.errors else "")) }}
+                                {% if form.capacity.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.capacity.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Computer Information -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Informações de Computadores</h5>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.has_computers(class="form-check-input") }}
+                                    {{ form.has_computers.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3" id="softwareGroup">
+                                {{ form.software_list.label(class="form-label") }}
+                                {{ form.software_list(class="form-control", rows="4", placeholder="Digite um software por linha") }}
+                                <div class="form-text">Digite um software por linha</div>
+                            </div>
+                            
+                            <div class="mb-3" id="passwordGroup">
+                                {{ form.computer_passwords.label(class="form-label") }}
+                                {{ form.computer_passwords(class="form-control", placeholder="Ex: admin123, user456") }}
+                                <div class="form-text">Informação sensível - será exibida no relatório PDF</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Images -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-3">Imagens</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.images.label(class="form-label") }}
+                                {{ form.images(class="form-control", multiple=True, accept="image/*") }}
+                                {% if form.images.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.images.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Selecione múltiplas imagens (JPG, PNG, GIF)</div>
+                            </div>
+                            
+                            <!-- Existing Images (for edit mode) -->
+                            {% if room and room.images %}
+                            <div class="mb-3">
+                                <label class="form-label">Imagens Atuais</label>
+                                <div class="row">
+                                    {% for image in room.images %}
+                                    <div class="col-md-3 mb-2">
+                                        <div class="card">
+                                            <img src="{{ url_for('uploaded_file', filename=image.filename) }}" 
+                                                 class="card-img-top" style="height: 150px; object-fit: cover;" 
+                                                 alt="{{ image.original_filename }}">
+                                            <div class="card-body p-2">
+                                                <small class="text-muted">{{ image.original_filename }}</small>
+                                                <form method="POST" action="{{ url_for('image_delete', room_id=room.id, image_id=image.id) }}" 
+                                                      class="mt-1" onsubmit="return confirm('Excluir esta imagem?')">
+                                                    <button type="submit" class="btn btn-sm btn-danger w-100">
+                                                        <i class="fas fa-trash"></i> Excluir
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <a href="{% if room %}{{ url_for('room_detail', room_id=room.id) }}{% else %}{{ url_for('index') }}{% endif %}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                                </a>
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hasComputersCheckbox = document.getElementById('has_computers');
+    const softwareGroup = document.getElementById('softwareGroup');
+    const passwordGroup = document.getElementById('passwordGroup');
+    
+    function toggleComputerFields() {
+        if (hasComputersCheckbox.checked) {
+            softwareGroup.style.display = 'block';
+            passwordGroup.style.display = 'block';
+        } else {
+            softwareGroup.style.display = 'none';
+            passwordGroup.style.display = 'none';
+        }
+    }
+    
+    hasComputersCheckbox.addEventListener('change', toggleComputerFields);
+    toggleComputerFields(); // Initial call
+});
+</script>
+{% endblock %}

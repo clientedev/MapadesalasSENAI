@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Mapa de Salas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-{% if schedule %}edit{% else %}plus{% endif %} me-2"></i>{{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.room_id.label(class="form-label") }}
+                        {{ form.room_id(class="form-select" + (" is-invalid" if form.room_id.errors else "")) }}
+                        {% if form.room_id.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.room_id.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.day_of_week.label(class="form-label") }}
+                        {{ form.day_of_week(class="form-select" + (" is-invalid" if form.day_of_week.errors else "")) }}
+                        {% if form.day_of_week.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.day_of_week.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.subject_name.label(class="form-label") }}
+                        {{ form.subject_name(class="form-control" + (" is-invalid" if form.subject_name.errors else "")) }}
+                        {% if form.subject_name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.subject_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.professor_name.label(class="form-label") }}
+                        {{ form.professor_name(class="form-control" + (" is-invalid" if form.professor_name.errors else "")) }}
+                        {% if form.professor_name.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.professor_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.start_time.label(class="form-label") }}
+                                {{ form.start_time(class="form-control" + (" is-invalid" if form.start_time.errors else "")) }}
+                                {% if form.start_time.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.start_time.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.end_time.label(class="form-label") }}
+                                {{ form.end_time(class="form-control" + (" is-invalid" if form.end_time.errors else "")) }}
+                                {% if form.end_time.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.end_time.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nota:</strong> O sistema verificará automaticamente se há conflitos de horário com outros agendamentos na mesma sala.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% if schedule %}{{ url_for('room_detail', room_id=schedule.room_id) }}{% else %}{{ url_for('index') }}{% endif %}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Schedule Preview (if editing) -->
+        {% if schedule %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>Horários Existentes da Sala
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set room_schedules = schedule.room.schedules %}
+                {% if room_schedules %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Disciplina</th>
+                                <th>Professor</th>
+                                <th>Horário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sch in room_schedules %}
+                            <tr {% if sch.id == schedule.id %}class="table-warning"{% endif %}>
+                                <td>{{ sch.day_name }}</td>
+                                <td>{{ sch.subject_name }}</td>
+                                <td>{{ sch.professor_name }}</td>
+                                <td>{{ sch.start_time.strftime('%H:%M') }} - {{ sch.end_time.strftime('%H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    O horário em edição está destacado em amarelo.
+                </small>
+                {% else %}
+                <p class="text-muted mb-0">Esta sala ainda não possui outros horários cadastrados.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pre-select room if provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room_id');
+    
+    if (roomId) {
+        const roomSelect = document.getElementById('room_id');
+        roomSelect.value = roomId;
+    }
+});
+</script>
+{% endblock %}

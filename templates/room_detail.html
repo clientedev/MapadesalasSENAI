@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - Mapa de Salas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-door-open me-2"></i>{{ room.name }}
+            </h1>
+            <div>
+                <a href="{{ url_for('room_edit', room_id=room.id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </a>
+                <a href="{{ url_for('room_pdf', room_id=room.id) }}" class="btn btn-success">
+                    <i class="fas fa-file-pdf me-1"></i>Gerar PDF
+                </a>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash me-1"></i>Excluir
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Room Information -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Informações Básicas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Localização:</strong></td>
+                                <td>{{ room.location }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Capacidade:</strong></td>
+                                <td>{{ room.capacity }} pessoas</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Possui Computadores:</strong></td>
+                                <td>
+                                    {% if room.has_computers %}
+                                        <span class="badge bg-success">Sim</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Não</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Criado em:</strong></td>
+                                <td>{{ room.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Software List -->
+                {% if room.has_computers and software_list %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>Softwares Instalados
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% for software in software_list %}
+                                <li class="list-group-item px-0">
+                                    <i class="fas fa-check text-success me-2"></i>{{ software }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Computer Passwords -->
+                {% if room.computer_passwords %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key me-2"></i>Informações de Acesso
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Informação Confidencial</strong>
+                        </div>
+                        <p><strong>Senhas dos Computadores:</strong></p>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="passwordField" 
+                                   value="{{ room.computer_passwords }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Images -->
+            <div class="col-lg-6">
+                {% if room.images %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-images me-2"></i>Imagens da Sala
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="roomCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for image in room.images %}
+                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                    <img src="{{ url_for('uploaded_file', filename=image.filename) }}" 
+                                         class="d-block w-100" style="height: 300px; object-fit: cover;" 
+                                         alt="{{ image.original_filename }}">
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <p>{{ image.original_filename }}</p>
+                                        <form method="POST" action="{{ url_for('image_delete', room_id=room.id, image_id=image.id) }}" 
+                                              class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir esta imagem?')">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i> Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if room.images|length > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#roomCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#roomCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Schedule -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>Agenda de Uso
+                </h5>
+                <a href="{{ url_for('schedule_new') }}?room_id={{ room.id }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i>Adicionar Horário
+                </a>
+            </div>
+            <div class="card-body">
+                {% if schedules %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Dia da Semana</th>
+                                <th>Disciplina</th>
+                                <th>Professor</th>
+                                <th>Horário</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr>
+                                <td>{{ schedule.day_name }}</td>
+                                <td>{{ schedule.subject_name }}</td>
+                                <td>{{ schedule.professor_name }}</td>
+                                <td>{{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('schedule_edit', schedule_id=schedule.id) }}" 
+                                       class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('schedule_delete', schedule_id=schedule.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este horário?')">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum horário agendado</h5>
+                    <p class="text-muted">Esta sala ainda não possui horários cadastrados.</p>
+                    <a href="{{ url_for('schedule_new') }}?room_id={{ room.id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Adicionar Primeiro Horário
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a sala <strong>{{ room.name }}</strong>?</p>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Esta ação não pode ser desfeita. Todos os horários e imagens associadas também serão excluídos.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('room_delete', room_id=room.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>Excluir Sala
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordField = document.getElementById('passwordField');
+    const toggleBtn = this;
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+    } else {
+        passwordField.type = 'password';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+    }
+});
+</script>
+{% endblock %}

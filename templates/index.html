@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa de Salas - Lista de Salas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-list me-2"></i>Lista de Salas
+        </h1>
+        
+        <!-- Search and Filters -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>Buscar e Filtrar
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('index') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Buscar</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               placeholder="Nome ou localização" value="{{ request.args.get('search', '') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="capacity_min" class="form-label">Capacidade Mín.</label>
+                        <input type="number" class="form-control" id="capacity_min" name="capacity_min" 
+                               min="1" value="{{ request.args.get('capacity_min', '') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="has_computers" class="form-label">Computadores</label>
+                        <select class="form-select" id="has_computers" name="has_computers">
+                            <option value="">Todos</option>
+                            <option value="1" {% if request.args.get('has_computers') == '1' %}selected{% endif %}>Sim</option>
+                            <option value="0" {% if request.args.get('has_computers') == '0' %}selected{% endif %}>Não</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="professor" class="form-label">Professor</label>
+                        <input type="text" class="form-control" id="professor" name="professor" 
+                               placeholder="Nome do professor" value="{{ request.args.get('professor', '') }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if rooms %}
+            <div class="row">
+                {% for room in rooms %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        {% if room.images %}
+                            <img src="{{ url_for('uploaded_file', filename=room.images[0].filename) }}" 
+                                 class="card-img-top" style="height: 200px; object-fit: cover;" 
+                                 alt="Imagem da {{ room.name }}">
+                        {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                                 style="height: 200px;">
+                                <i class="fas fa-door-open fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ room.name }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ room.location }}
+                                </small>
+                            </p>
+                            <div class="mb-2">
+                                <span class="badge bg-info">
+                                    <i class="fas fa-users me-1"></i>{{ room.capacity }} pessoas
+                                </span>
+                                {% if room.has_computers %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-desktop me-1"></i>Computadores
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-auto">
+                                <a href="{{ url_for('room_detail', room_id=room.id) }}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-door-open fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Nenhuma sala encontrada</h4>
+                <p class="text-muted">
+                    {% if request.args %}
+                        Tente ajustar os filtros de busca ou 
+                        <a href="{{ url_for('index') }}" class="text-decoration-none">limpar a busca</a>.
+                    {% else %}
+                        Comece criando sua primeira sala.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('room_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Criar Nova Sala
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

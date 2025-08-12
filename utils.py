@@ -161,9 +161,9 @@ def generate_room_pdf(room):
     return temp_path
 
 def generate_room_qr_code(room):
-    """Generate a QR code for a room with its information URL"""
-    # Create the URL for room details with QR parameter for mobile optimization
-    room_url = url_for('room_detail', room_id=room.id, qr=1, _external=True)
+    """Generate a QR code for a room with its standalone information page"""
+    # Create the URL for standalone room information
+    room_url = url_for('room_standalone', room_id=room.id, _external=True)
     
     # Create QR code
     qr = qrcode.QRCode(

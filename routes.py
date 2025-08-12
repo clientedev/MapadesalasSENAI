@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+from datetime import datetime
 from flask import render_template, request, redirect, url_for, flash, send_file, abort, jsonify
 from werkzeug.utils import secure_filename
 from app import app, db
@@ -68,14 +69,6 @@ def room_detail(room_id):
             software_list = json.loads(room.software_list)
         except:
             software_list = room.software_list.split('\n') if room.software_list else []
-    
-    # Check if this is a mobile/QR access
-    user_agent = request.headers.get('User-Agent', '').lower()
-    is_mobile = any(x in user_agent for x in ['mobile', 'android', 'iphone', 'ipad'])
-    
-    # Use simplified template for mobile QR access
-    if is_mobile and request.args.get('qr') == '1':
-        return render_template('room_qr_view.html', room=room, schedules=schedules, software_list=software_list)
     
     return render_template('room_detail.html', room=room, schedules=schedules, software_list=software_list)
 
@@ -287,6 +280,25 @@ def room_qr_code(room_id):
     qr_path = generate_room_qr_code(room)
     
     return send_file(qr_path, as_attachment=True, download_name=f'qrcode_sala_{room.name}.png', mimetype='image/png')
+
+@app.route('/room/<int:room_id>/standalone')
+def room_standalone(room_id):
+    room = Room.query.get_or_404(room_id)
+    schedules = Schedule.query.filter_by(room_id=room_id).order_by(Schedule.day_of_week, Schedule.start_time).all()
+    
+    # Parse software list
+    software_list = []
+    if room.software_list:
+        try:
+            software_list = json.loads(room.software_list)
+        except:
+            software_list = room.software_list.split('\n') if room.software_list else []
+    
+    return render_template('room_standalone.html', 
+                         room=room, 
+                         schedules=schedules, 
+                         software_list=software_list,
+                         now=datetime.now())
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):

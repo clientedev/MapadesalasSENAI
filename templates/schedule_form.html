@@ -55,6 +55,12 @@
                         {% endif %}
                     </div>
                     
+                    <div class="mb-3">
+                        {{ form.technical_course.label(class="form-label") }}
+                        {{ form.technical_course(class="form-control", placeholder="Ex: Técnico em Informática") }}
+                        <div class="form-text">Curso técnico relacionado a esta disciplina</div>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -79,6 +85,42 @@
                                 {% endif %}
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.start_date.label(class="form-label") }}
+                                {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.start_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Deixe em branco para horário recorrente</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.end_date.label(class="form-label") }}
+                                {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else "")) }}
+                                {% if form.end_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.end_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Deixe em branco para horário recorrente</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_recurring(class="form-check-input") }}
+                            {{ form.is_recurring.label(class="form-check-label") }}
+                        </div>
+                        <div class="form-text">Marque se este horário se repete todas as semanas</div>
                     </div>
                     
                     <div class="alert alert-info">

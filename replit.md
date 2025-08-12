@@ -1,6 +1,6 @@
 # Overview
 
-This is a classroom management system built with Flask that helps educational institutions manage room information, schedules, and resources. The application allows users to create, view, edit, and delete classroom records along with their schedules. Key features include room search and filtering, image uploads for rooms, schedule management, and PDF report generation.
+This is a classroom management system built for Escola SENAI "Morvan Figueiredo" with Flask that helps manage room information, schedules, and resources. The application allows users to create, view, edit, and delete classroom records along with their schedules. Key features include room search and filtering, image uploads for rooms, schedule management with bulk scheduling for long periods (e.g., Monday to Friday for several months), technical course tracking, and PDF report generation.
 
 # User Preferences
 
@@ -22,10 +22,19 @@ Preferred communication style: Simple, everyday language.
 - **Image Processing**: PIL (Pillow) for image handling and optimization
 
 ## Data Model Design
-- **Room Entity**: Core entity storing room details, capacity, computer availability, and software lists
+- **Room Entity**: Core entity storing room details, capacity, computer availability, software lists, and technical course information
 - **RoomImage Entity**: Separate table for multiple image uploads per room
-- **Schedule Entity**: Time-based scheduling with day-of-week and time constraints
+- **Schedule Entity**: Enhanced time-based scheduling with day-of-week, time constraints, date ranges, technical course tracking, and recurring schedule options
 - **Relationships**: One-to-many relationships between rooms and both images and schedules
+
+## Recent Updates (August 2025)
+- Added technical course field to Room model for tracking main courses that use each room
+- Enhanced Schedule model with date ranges (start_date, end_date), technical course tracking, and recurring schedule flags
+- Implemented bulk scheduling functionality for creating long-period schedules (e.g., Monday-Friday for several months)
+- Updated branding to "Escola SENAI Morvan Figueiredo" throughout the application
+- Added new BulkScheduleForm with multi-day selection and date range capabilities
+- Enhanced UI to display technical course information in room details and schedule tables
+- Created dedicated bulk scheduling template with quick day selection buttons
 
 ## File Storage Strategy
 - **Upload Directory**: Local file system storage in `uploads/` folder

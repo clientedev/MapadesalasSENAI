@@ -73,6 +73,12 @@
                                 {{ form.computer_passwords(class="form-control", placeholder="Ex: admin123, user456") }}
                                 <div class="form-text">Informação sensível - será exibida no relatório PDF</div>
                             </div>
+                            
+                            <div class="mb-3">
+                                {{ form.technical_course.label(class="form-label") }}
+                                {{ form.technical_course(class="form-control", placeholder="Ex: Técnico em Informática") }}
+                                <div class="form-text">Curso técnico principal que usa esta sala</div>
+                            </div>
                         </div>
                     </div>
                     

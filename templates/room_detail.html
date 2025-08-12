@@ -52,6 +52,14 @@
                                     {% endif %}
                                 </td>
                             </tr>
+                            {% if room.technical_course %}
+                            <tr>
+                                <td><strong>Curso Técnico Principal:</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">{{ room.technical_course }}</span>
+                                </td>
+                            </tr>
+                            {% endif %}
                             <tr>
                                 <td><strong>Criado em:</strong></td>
                                 <td>{{ room.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
@@ -169,7 +177,9 @@
                                 <th>Dia da Semana</th>
                                 <th>Disciplina</th>
                                 <th>Professor</th>
+                                <th>Curso Técnico</th>
                                 <th>Horário</th>
+                                <th>Período</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -179,7 +189,23 @@
                                 <td>{{ schedule.day_name }}</td>
                                 <td>{{ schedule.subject_name }}</td>
                                 <td>{{ schedule.professor_name }}</td>
+                                <td>
+                                    {% if schedule.technical_course %}
+                                        <span class="badge bg-info">{{ schedule.technical_course }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ schedule.start_time.strftime('%H:%M') }} - {{ schedule.end_time.strftime('%H:%M') }}</td>
+                                <td>
+                                    {% if schedule.start_date and schedule.end_date %}
+                                        <small>{{ schedule.start_date.strftime('%d/%m/%y') }} - {{ schedule.end_date.strftime('%d/%m/%y') }}</small>
+                                    {% elif schedule.is_recurring %}
+                                        <span class="badge bg-success">Recorrente</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <a href="{{ url_for('schedule_edit', schedule_id=schedule.id) }}" 
                                        class="btn btn-sm btn-warning">

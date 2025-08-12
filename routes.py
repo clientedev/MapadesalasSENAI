@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for, flash, send_file,
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import Room, RoomImage, Schedule
-from forms import RoomForm, ScheduleForm, SearchForm
+from forms import RoomForm, ScheduleForm, SearchForm, BulkScheduleForm
 from utils import generate_room_pdf, allowed_file
 from sqlalchemy import or_
 
@@ -81,7 +81,8 @@ def room_new():
             location=form.location.data,
             capacity=form.capacity.data,
             has_computers=form.has_computers.data,
-            computer_passwords=form.computer_passwords.data
+            computer_passwords=form.computer_passwords.data,
+            technical_course=form.technical_course.data
         )
         
         # Process software list
@@ -136,6 +137,7 @@ def room_edit(room_id):
         room.capacity = form.capacity.data
         room.has_computers = form.has_computers.data
         room.computer_passwords = form.computer_passwords.data
+        room.technical_course = form.technical_course.data
         
         # Process software list
         if form.software_list.data:
@@ -217,7 +219,11 @@ def schedule_create():
             subject_name=form.subject_name.data,
             professor_name=form.professor_name.data,
             start_time=form.start_time.data,
-            end_time=form.end_time.data
+            end_time=form.end_time.data,
+            start_date=form.start_date.data,
+            end_date=form.end_date.data,
+            technical_course=form.technical_course.data,
+            is_recurring=form.is_recurring.data
         )
         
         db.session.add(schedule)
@@ -239,6 +245,10 @@ def schedule_edit(schedule_id):
         schedule.professor_name = form.professor_name.data
         schedule.start_time = form.start_time.data
         schedule.end_time = form.end_time.data
+        schedule.start_date = form.start_date.data
+        schedule.end_date = form.end_date.data
+        schedule.technical_course = form.technical_course.data
+        schedule.is_recurring = form.is_recurring.data
         
         db.session.commit()
         flash('Horário atualizado com sucesso!', 'success')
@@ -266,6 +276,73 @@ def room_pdf(room_id):
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('base.html'), 404
+
+@app.route('/schedule/bulk', methods=['GET', 'POST'])
+def schedule_bulk():
+    form = BulkScheduleForm()
+    
+    if form.validate_on_submit():
+        # Get selected days
+        selected_days = []
+        day_mapping = {
+            'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
+            'friday': 4, 'saturday': 5, 'sunday': 6
+        }
+        
+        for day_name, day_num in day_mapping.items():
+            if getattr(form, day_name).data:
+                selected_days.append(day_num)
+        
+        schedules_created = 0
+        current_date = form.start_date.data
+        end_date = form.end_date.data
+        
+        # Create schedules for each selected day within the date range
+        while current_date <= end_date:
+            # Check if current date's weekday is in selected days
+            if current_date.weekday() in selected_days:
+                # Check for conflicts
+                conflicting_schedule = Schedule.query.filter_by(
+                    room_id=form.room_id.data,
+                    day_of_week=current_date.weekday()
+                ).filter(
+                    Schedule.start_time < form.end_time.data,
+                    Schedule.end_time > form.start_time.data
+                ).first()
+                
+                if not conflicting_schedule:
+                    schedule = Schedule(
+                        room_id=form.room_id.data,
+                        day_of_week=current_date.weekday(),
+                        subject_name=form.technical_course.data,
+                        professor_name=form.professor_name.data,
+                        start_time=form.start_time.data,
+                        end_time=form.end_time.data,
+                        start_date=current_date,
+                        end_date=current_date,
+                        technical_course=form.technical_course.data,
+                        is_recurring=False
+                    )
+                    db.session.add(schedule)
+                    schedules_created += 1
+            
+            # Move to next day
+            from datetime import timedelta
+            current_date += timedelta(days=1)
+        
+        if schedules_created > 0:
+            db.session.commit()
+            flash(f'{schedules_created} agendamentos criados com sucesso!', 'success')
+            room = Room.query.get(form.room_id.data)
+            return redirect(url_for('room_detail', room_id=room.id))
+        else:
+            flash('Nenhum agendamento foi criado. Verifique se há conflitos de horário.', 'warning')
+    
+    return render_template('bulk_schedule_form.html', form=form, title='Agendamento em Lote')
 
 @app.errorhandler(404)
 def not_found_error(error):

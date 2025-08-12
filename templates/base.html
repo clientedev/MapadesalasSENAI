@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mapa de Salas{% endblock %}</title>
+    <title>{% block title %}Mapa de Salas - Escola SENAI Morvan Figueiredo{% endblock %}</title>
     
     <!-- Bootstrap CSS with Replit theme -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
@@ -19,7 +19,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-door-open me-2"></i>Mapa de Salas
+                <i class="fas fa-door-open me-2"></i>
+                <span class="d-none d-md-inline">Escola SENAI "Morvan Figueiredo"</span>
+                <span class="d-md-none">SENAI</span>
+                <small class="d-block" style="font-size: 0.7em; margin-top: -2px;">Mapa de Salas</small>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -39,6 +42,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('schedule_new') }}">
                             <i class="fas fa-calendar-plus me-1"></i>Novo Horário
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('schedule_bulk') }}">
+                            <i class="fas fa-calendar-week me-1"></i>Agendamento em Lote
                         </a>
                     </li>
                 </ul>
@@ -68,7 +76,7 @@
     <!-- Footer -->
     <footer class="bg-dark text-light py-4 mt-5">
         <div class="container text-center">
-            <p>&copy; 2025 Mapa de Salas. Sistema de Gerenciamento de Salas de Aula.</p>
+            <p>&copy; 2025 Escola SENAI "Morvan Figueiredo". Sistema de Gerenciamento de Salas de Aula.</p>
         </div>
     </footer>
 

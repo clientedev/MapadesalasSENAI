@@ -10,6 +10,7 @@ class Room(db.Model):
     has_computers = db.Column(db.Boolean, default=False)
     software_list = db.Column(db.Text)  # JSON string of software list
     computer_passwords = db.Column(db.Text)  # Encrypted passwords
+    technical_course = db.Column(db.String(200))  # Main technical course that runs in this room
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -38,6 +39,10 @@ class Schedule(db.Model):
     professor_name = db.Column(db.String(100), nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
+    start_date = db.Column(db.Date)  # When this schedule period starts
+    end_date = db.Column(db.Date)    # When this schedule period ends
+    technical_course = db.Column(db.String(200))  # Technical course name
+    is_recurring = db.Column(db.Boolean, default=True)  # If this is a recurring schedule
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Add constraint to ensure end_time > start_time

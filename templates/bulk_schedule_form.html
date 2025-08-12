@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Escola SENAI Morvan Figueiredo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-calendar-week me-2"></i>{{ title }}
+                </h4>
+                <small class="text-muted">Crie agendamentos para períodos longos (ex: segunda a sexta por vários meses)</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Room and Course Information -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Informações Básicas</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.room_id.label(class="form-label") }}
+                                {{ form.room_id(class="form-select" + (" is-invalid" if form.room_id.errors else "")) }}
+                                {% if form.room_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.room_id.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.technical_course.label(class="form-label") }}
+                                {{ form.technical_course(class="form-control" + (" is-invalid" if form.technical_course.errors else ""), placeholder="Ex: Técnico em Informática") }}
+                                {% if form.technical_course.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.technical_course.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.professor_name.label(class="form-label") }}
+                                {{ form.professor_name(class="form-control" + (" is-invalid" if form.professor_name.errors else "")) }}
+                                {% if form.professor_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.professor_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Days of Week Selection -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Dias da Semana</h5>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Selecione os dias que o curso acontece:</label>
+                                <div class="form-check">
+                                    {{ form.monday(class="form-check-input") }}
+                                    {{ form.monday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.tuesday(class="form-check-input") }}
+                                    {{ form.tuesday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.wednesday(class="form-check-input") }}
+                                    {{ form.wednesday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.thursday(class="form-check-input") }}
+                                    {{ form.thursday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.friday(class="form-check-input") }}
+                                    {{ form.friday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.saturday(class="form-check-input") }}
+                                    {{ form.saturday.label(class="form-check-label") }}
+                                </div>
+                                <div class="form-check">
+                                    {{ form.sunday(class="form-check-input") }}
+                                    {{ form.sunday.label(class="form-check-label") }}
+                                </div>
+                                {% if form.monday.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.monday.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Quick selection buttons -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="selectWeekdays()">
+                                    Segunda a Sexta
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="selectAll()">
+                                    Todos os Dias
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAll()">
+                                    Limpar Tudo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Time Information -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Horários</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.start_time.label(class="form-label") }}
+                                        {{ form.start_time(class="form-control" + (" is-invalid" if form.start_time.errors else "")) }}
+                                        {% if form.start_time.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.start_time.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.end_time.label(class="form-label") }}
+                                        {{ form.end_time(class="form-control" + (" is-invalid" if form.end_time.errors else "")) }}
+                                        {% if form.end_time.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.end_time.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Período</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.start_date.label(class="form-label") }}
+                                        {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+                                        {% if form.start_date.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.start_date.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.end_date.label(class="form-label") }}
+                                        {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else "")) }}
+                                        {% if form.end_date.errors %}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.end_date.errors %}{{ error }}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Como funciona:</strong> O sistema criará um agendamento individual para cada dia selecionado dentro do período especificado. 
+                        Agendamentos com conflitos de horário serão automaticamente ignorados.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Voltar
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function selectWeekdays() {
+    document.getElementById('monday').checked = true;
+    document.getElementById('tuesday').checked = true;
+    document.getElementById('wednesday').checked = true;
+    document.getElementById('thursday').checked = true;
+    document.getElementById('friday').checked = true;
+    document.getElementById('saturday').checked = false;
+    document.getElementById('sunday').checked = false;
+}
+
+function selectAll() {
+    document.getElementById('monday').checked = true;
+    document.getElementById('tuesday').checked = true;
+    document.getElementById('wednesday').checked = true;
+    document.getElementById('thursday').checked = true;
+    document.getElementById('friday').checked = true;
+    document.getElementById('saturday').checked = true;
+    document.getElementById('sunday').checked = true;
+}
+
+function clearAll() {
+    document.getElementById('monday').checked = false;
+    document.getElementById('tuesday').checked = false;
+    document.getElementById('wednesday').checked = false;
+    document.getElementById('thursday').checked = false;
+    document.getElementById('friday').checked = false;
+    document.getElementById('saturday').checked = false;
+    document.getElementById('sunday').checked = false;
+}
+
+// Auto-populate end date when start date changes
+document.getElementById('start_date').addEventListener('change', function() {
+    const startDate = new Date(this.value);
+    const endDateField = document.getElementById('end_date');
+    
+    if (!endDateField.value && startDate) {
+        // Set end date to 3 months later
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 3);
+        endDateField.value = endDate.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

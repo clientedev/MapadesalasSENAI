@@ -94,26 +94,52 @@ def generate_room_pdf(room):
     if schedules:
         story.append(Paragraph("Agenda de Uso", styles['Heading2']))
         
-        schedule_data = [['Dia da Semana', 'Disciplina', 'Professor', 'Horário']]
-        for schedule in schedules:
-            schedule_data.append([
-                schedule.day_name,
-                schedule.subject_name,
-                schedule.professor_name,
-                f"{schedule.start_time.strftime('%H:%M')} - {schedule.end_time.strftime('%H:%M')}"
-            ])
+        # Create schedule headers with course info if available
+        if any(schedule.technical_course for schedule in schedules):
+            schedule_data = [['Dia', 'Disciplina', 'Professor', 'Curso', 'Horário']]
+            col_widths = [1.2*inch, 1.8*inch, 1.3*inch, 1.2*inch, 1.2*inch]
+        else:
+            schedule_data = [['Dia da Semana', 'Disciplina', 'Professor', 'Horário']]
+            col_widths = [1.5*inch, 2.2*inch, 1.8*inch, 1.2*inch]
         
-        schedule_table = Table(schedule_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 1.5*inch])
+        for schedule in schedules:
+            # Truncate long text to prevent overflow
+            subject = schedule.subject_name[:25] + '...' if len(schedule.subject_name) > 25 else schedule.subject_name
+            professor = schedule.professor_name[:20] + '...' if len(schedule.professor_name) > 20 else schedule.professor_name
+            
+            if any(schedule.technical_course for schedule in schedules):
+                course = (schedule.technical_course[:15] + '...' if schedule.technical_course and len(schedule.technical_course) > 15 
+                         else schedule.technical_course) if schedule.technical_course else '-'
+                schedule_data.append([
+                    schedule.day_name,
+                    subject,
+                    professor,
+                    course,
+                    f"{schedule.start_time.strftime('%H:%M')}-{schedule.end_time.strftime('%H:%M')}"
+                ])
+            else:
+                schedule_data.append([
+                    schedule.day_name,
+                    subject,
+                    professor,
+                    f"{schedule.start_time.strftime('%H:%M')} - {schedule.end_time.strftime('%H:%M')}"
+                ])
+        
+        schedule_table = Table(schedule_data, colWidths=col_widths)
         schedule_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
             ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('WORDWRAP', (0, 0), (-1, -1), True),
         ]))
         
         story.append(schedule_table)

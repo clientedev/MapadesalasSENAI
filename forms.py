@@ -66,7 +66,7 @@ class ScheduleForm(FlaskForm):
     def validate_room_id(self, field):
         # Check for schedule conflicts
         if self.start_time.data and self.end_time.data and self.day_of_week.data is not None:
-            conflicting_schedule = Schedule.query.filter_by(
+            query = Schedule.query.filter_by(
                 room_id=field.data,
                 day_of_week=self.day_of_week.data
             ).filter(
@@ -76,9 +76,9 @@ class ScheduleForm(FlaskForm):
             )
             
             if self.schedule_id:
-                conflicting_schedule = conflicting_schedule.filter(Schedule.id != self.schedule_id)
+                query = query.filter(Schedule.id != self.schedule_id)
             
-            if conflicting_schedule.first():
+            if query.first():
                 raise ValidationError('Existe um conflito de horário com outro agendamento nesta sala.')
 
 class SearchForm(FlaskForm):
@@ -118,6 +118,21 @@ class BulkScheduleForm(FlaskForm):
         super(BulkScheduleForm, self).__init__(*args, **kwargs)
         # Populate room choices
         self.room_id.choices = [(room.id, room.name) for room in Room.query.order_by(Room.name).all()]
+    
+    def validate_end_time(self, field):
+        if self.start_time.data and field.data <= self.start_time.data:
+            raise ValidationError('O horário de término deve ser posterior ao horário de início.')
+    
+    def validate_end_date(self, field):
+        if self.start_date.data and field.data < self.start_date.data:
+            raise ValidationError('A data de fim deve ser posterior à data de início.')
+    
+    def validate_monday(self, field):
+        """Validate that at least one day is selected"""
+        days = [self.monday.data, self.tuesday.data, self.wednesday.data, 
+                self.thursday.data, self.friday.data, self.saturday.data, self.sunday.data]
+        if not any(days):
+            raise ValidationError('Selecione pelo menos um dia da semana.')
     
     def validate_end_time(self, field):
         if self.start_time.data and field.data <= self.start_time.data:

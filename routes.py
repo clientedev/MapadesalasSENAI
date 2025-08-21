@@ -1,8 +1,8 @@
-import os
+import io
 import json
 import uuid
-from datetime import datetime
-from flask import render_template, request, redirect, url_for, flash, send_file, abort, jsonify
+from datetime import datetime, timedelta
+from flask import render_template, request, redirect, url_for, flash, send_file, abort
 from werkzeug.utils import secure_filename
 from app import app, db
 from models import Room, RoomImage, Schedule
@@ -92,22 +92,14 @@ def room_new():
             room.software_list = json.dumps(software_list)
         
         db.session.add(room)
-        db.session.flush()  # Get room.id
+        db.session.flush()  # pega o room.id antes do commit
         
         # Handle image uploads
         if form.images.data:
             for file in form.images.data:
                 if file and file.filename and allowed_file(file.filename):
-                    # Generate unique filename
-                    file_ext = os.path.splitext(file.filename)[1]
-                    unique_filename = str(uuid.uuid4()) + file_ext
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                    
-                    file.save(filepath)
-                    
-                    # Save to database
                     room_image = RoomImage(
-                        filename=unique_filename,
+                        data=file.read(),  # salva os bytes no banco
                         original_filename=secure_filename(file.filename),
                         room_id=room.id
                     )
@@ -151,16 +143,8 @@ def room_edit(room_id):
         if form.images.data:
             for file in form.images.data:
                 if file and file.filename and allowed_file(file.filename):
-                    # Generate unique filename
-                    file_ext = os.path.splitext(file.filename)[1]
-                    unique_filename = str(uuid.uuid4()) + file_ext
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                    
-                    file.save(filepath)
-                    
-                    # Save to database
                     room_image = RoomImage(
-                        filename=unique_filename,
+                        data=file.read(),
                         original_filename=secure_filename(file.filename),
                         room_id=room.id
                     )
@@ -176,13 +160,6 @@ def room_edit(room_id):
 def room_delete(room_id):
     room = Room.query.get_or_404(room_id)
     
-    # Delete associated image files
-    for image in room.images:
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image.filename))
-        except OSError:
-            pass  # File might not exist
-    
     db.session.delete(room)
     db.session.commit()
     flash('Sala excluída com sucesso!', 'success')
@@ -193,16 +170,20 @@ def image_delete(room_id, image_id):
     room = Room.query.get_or_404(room_id)
     image = RoomImage.query.filter_by(id=image_id, room_id=room_id).first_or_404()
     
-    # Delete file
-    try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image.filename))
-    except OSError:
-        pass
-    
     db.session.delete(image)
     db.session.commit()
     flash('Imagem excluída com sucesso!', 'success')
     return redirect(url_for('room_detail', room_id=room_id))
+
+@app.route('/room/image/<int:image_id>')
+def get_room_image(image_id):
+    image = RoomImage.query.get_or_404(image_id)
+    return send_file(
+        io.BytesIO(image.data),
+        mimetype="image/jpeg",  # pode detectar pelo nome original
+        as_attachment=False,
+        download_name=image.original_filename
+    )
 
 @app.route('/schedule/new')
 def schedule_new():
@@ -300,10 +281,6 @@ def room_standalone(room_id):
                          software_list=software_list,
                          now=datetime.now())
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('base.html'), 404
@@ -330,9 +307,7 @@ def schedule_bulk():
         
         # Create schedules for each selected day within the date range
         while current_date <= end_date:
-            # Check if current date's weekday is in selected days
             if current_date.weekday() in selected_days:
-                # Check for conflicts
                 conflicting_schedule = Schedule.query.filter_by(
                     room_id=form.room_id.data,
                     day_of_week=current_date.weekday()
@@ -357,8 +332,6 @@ def schedule_bulk():
                     db.session.add(schedule)
                     schedules_created += 1
             
-            # Move to next day
-            from datetime import timedelta
             current_date += timedelta(days=1)
         
         if schedules_created > 0:
@@ -371,11 +344,8 @@ def schedule_bulk():
     
     return render_template('bulk_schedule_form.html', form=form, title='Agendamento em Lote')
 
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('base.html'), 404
-
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
     return render_template('base.html'), 500
+

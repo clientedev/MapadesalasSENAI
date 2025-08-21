@@ -57,7 +57,7 @@
                             
                             <div class="mb-3">
                                 <div class="form-check">
-                                    {{ form.has_computers(class="form-check-input") }}
+                                    {{ form.has_computers(class="form-check-input", id="has_computers") }}
                                     {{ form.has_computers.label(class="form-check-label") }}
                                 </div>
                             </div>
@@ -106,12 +106,12 @@
                                     {% for image in room.images %}
                                     <div class="col-md-3 mb-2">
                                         <div class="card">
-                                            <img src="{{ url_for('uploaded_file', filename=image.filename) }}" 
+                                            <img src="{{ url_for('room_image_get', room_id=room.id, image_id=image.id) }}" 
                                                  class="card-img-top" style="height: 150px; object-fit: cover;" 
                                                  alt="{{ image.original_filename }}">
                                             <div class="card-body p-2">
                                                 <small class="text-muted">{{ image.original_filename }}</small>
-                                                <form method="POST" action="{{ url_for('image_delete', room_id=room.id, image_id=image.id) }}" 
+                                                <form method="POST" action="{{ url_for('room_image_delete', room_id=room.id, image_id=image.id) }}" 
                                                       class="mt-1" onsubmit="return confirm('Excluir esta imagem?')">
                                                     <button type="submit" class="btn btn-sm btn-danger w-100">
                                                         <i class="fas fa-trash"></i> Excluir

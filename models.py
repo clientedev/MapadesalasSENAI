@@ -21,7 +21,12 @@ class Room(db.Model):
     def __repr__(self):
         return f'<Room {self.name}>'
 
+
 class RoomImage(db.Model):
+    """
+    Modelo antigo para imagens de sala (referência a arquivos).
+    Se quiser migrar 100% para o banco, pode ser desativado futuramente.
+    """
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200), nullable=False)
     original_filename = db.Column(db.String(200), nullable=False)
@@ -30,6 +35,7 @@ class RoomImage(db.Model):
     
     def __repr__(self):
         return f'<RoomImage {self.filename}>'
+
 
 class Schedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,3 +65,17 @@ class Schedule(db.Model):
         days = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 
                 'Sexta-feira', 'Sábado', 'Domingo']
         return days[self.day_of_week]
+
+
+class File(db.Model):
+    """
+    Modelo para armazenar qualquer arquivo (imagem ou planilha) diretamente no Postgres.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    mimetype = db.Column(db.String(50), nullable=False)  # ex: image/png, application/vnd.ms-excel
+    data = db.Column(db.LargeBinary, nullable=False)  # conteúdo binário do arquivo
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<File {self.filename}>'

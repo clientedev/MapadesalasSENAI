@@ -131,7 +131,8 @@
                             <div class="carousel-inner">
                                 {% for image in room.images %}
                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                    <img src="{{ url_for('uploaded_file', filename=image.filename) }}" 
+                                    <!-- 🔥 pega direto do banco -->
+                                    <img src="{{ url_for('image_get', room_id=room.id, image_id=image.id) }}" 
                                          class="d-block w-100" style="height: 300px; object-fit: cover;" 
                                          alt="{{ image.original_filename }}">
                                     <div class="carousel-caption d-none d-md-block">

@@ -3,8 +3,9 @@ from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 from wtforms import StringField, IntegerField, BooleanField, TextAreaField, SelectField, TimeField, SubmitField, DateField
 from wtforms.validators import DataRequired, NumberRange, Length, ValidationError, Optional
 from wtforms.widgets import PasswordInput
-from models import Room, Schedule
+from models import Room, Schedule, Patrimonio
 from datetime import time, date
+
 
 class RoomForm(FlaskForm):
     name = StringField('Nome da Sala', validators=[DataRequired(), Length(min=1, max=100)])
@@ -27,6 +28,25 @@ class RoomForm(FlaskForm):
         room = Room.query.filter_by(name=field.data).first()
         if room and (not self.room_id or room.id != self.room_id):
             raise ValidationError('Uma sala com este nome já existe.')
+
+
+class PatrimonioForm(FlaskForm):
+    name = StringField('Nome do Patrimônio', validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField('Descrição', validators=[Optional()])
+    file = FileField('Planilha do Patrimônio', validators=[
+        FileAllowed(['xls', 'xlsx', 'csv'], 'Apenas planilhas são permitidas!')
+    ])
+    submit = SubmitField('Salvar Patrimônio')
+    
+    def __init__(self, patrimonio_id=None, *args, **kwargs):
+        super(PatrimonioForm, self).__init__(*args, **kwargs)
+        self.patrimonio_id = patrimonio_id
+    
+    def validate_name(self, field):
+        patrimonio = Patrimonio.query.filter_by(name=field.data).first()
+        if patrimonio and (not self.patrimonio_id or patrimonio.id != self.patrimonio_id):
+            raise ValidationError('Já existe um patrimônio com este nome.')
+
 
 class ScheduleForm(FlaskForm):
     room_id = SelectField('Sala', coerce=int, validators=[DataRequired()])
@@ -52,7 +72,6 @@ class ScheduleForm(FlaskForm):
     def __init__(self, schedule_id=None, *args, **kwargs):
         super(ScheduleForm, self).__init__(*args, **kwargs)
         self.schedule_id = schedule_id
-        # Populate room choices
         self.room_id.choices = [(room.id, room.name) for room in Room.query.order_by(Room.name).all()]
     
     def validate_end_time(self, field):
@@ -64,22 +83,19 @@ class ScheduleForm(FlaskForm):
             raise ValidationError('A data de fim deve ser posterior à data de início.')
     
     def validate_room_id(self, field):
-        # Check for schedule conflicts
         if self.start_time.data and self.end_time.data and self.day_of_week.data is not None:
             query = Schedule.query.filter_by(
                 room_id=field.data,
                 day_of_week=self.day_of_week.data
             ).filter(
-                # Check for time overlap
                 Schedule.start_time < self.end_time.data,
                 Schedule.end_time > self.start_time.data
             )
-            
             if self.schedule_id:
                 query = query.filter(Schedule.id != self.schedule_id)
-            
             if query.first():
                 raise ValidationError('Existe um conflito de horário com outro agendamento nesta sala.')
+
 
 class SearchForm(FlaskForm):
     search = StringField('Buscar')
@@ -92,13 +108,12 @@ class SearchForm(FlaskForm):
     professor = StringField('Professor')
     submit = SubmitField('Buscar')
 
+
 class BulkScheduleForm(FlaskForm):
-    """Form for creating bulk schedules for long periods"""
     room_id = SelectField('Sala', coerce=int, validators=[DataRequired()])
     technical_course = StringField('Curso Técnico', validators=[DataRequired(), Length(min=1, max=200)])
     professor_name = StringField('Nome do Professor', validators=[DataRequired(), Length(min=1, max=100)])
     
-    # Multiple days selection
     monday = BooleanField('Segunda-feira')
     tuesday = BooleanField('Terça-feira')
     wednesday = BooleanField('Quarta-feira')
@@ -116,23 +131,7 @@ class BulkScheduleForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(BulkScheduleForm, self).__init__(*args, **kwargs)
-        # Populate room choices
         self.room_id.choices = [(room.id, room.name) for room in Room.query.order_by(Room.name).all()]
-    
-    def validate_end_time(self, field):
-        if self.start_time.data and field.data <= self.start_time.data:
-            raise ValidationError('O horário de término deve ser posterior ao horário de início.')
-    
-    def validate_end_date(self, field):
-        if self.start_date.data and field.data < self.start_date.data:
-            raise ValidationError('A data de fim deve ser posterior à data de início.')
-    
-    def validate_monday(self, field):
-        """Validate that at least one day is selected"""
-        days = [self.monday.data, self.tuesday.data, self.wednesday.data, 
-                self.thursday.data, self.friday.data, self.saturday.data, self.sunday.data]
-        if not any(days):
-            raise ValidationError('Selecione pelo menos um dia da semana.')
     
     def validate_end_time(self, field):
         if self.start_time.data and field.data <= self.start_time.data:
@@ -145,15 +144,12 @@ class BulkScheduleForm(FlaskForm):
     def validate(self, extra_validators=None):
         if not super().validate(extra_validators):
             return False
-        
-        # Check if at least one day is selected
         days_selected = any([
             self.monday.data, self.tuesday.data, self.wednesday.data,
             self.thursday.data, self.friday.data, self.saturday.data, self.sunday.data
         ])
-        
         if not days_selected:
             self.monday.errors.append('Selecione pelo menos um dia da semana.')
             return False
-        
         return True
+

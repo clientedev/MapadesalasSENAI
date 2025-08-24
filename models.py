@@ -13,6 +13,9 @@ class Room(db.Model):
     technical_course = db.Column(db.String(200))  # Main technical course that runs in this room
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Novo campo para armazenar imagem diretamente no Postgres
+    image_data = db.Column(db.LargeBinary, nullable=True)
     
     # Relationships
     images = db.relationship('RoomImage', backref='room', lazy=True, cascade='all, delete-orphan')
